@@ -23,7 +23,7 @@ Key modules in the proposed solution are:
 
 Here's the file structure of the code:
 
-""" C:.
+"""text C:.
 │   .gitignore
 │   config.py
 │   environment.yml
