@@ -23,7 +23,7 @@ Key modules in the proposed solution are:
 
 Here's the file structure of the code:
 
-C:.
+<pre> """text C:.
 │   .gitignore
 │   config.py
 │   environment.yml
@@ -74,4 +74,4 @@ C:.
 │     metrics_prediction.py
 │     model_revalidation.py
 │     model_training.py
-│     product_scoring.py
+│     product_scoring.py """<\pre>
