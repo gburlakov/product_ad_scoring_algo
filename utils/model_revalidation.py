@@ -1,18 +1,10 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
 
 import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 
-# In[ ]:
-
-
-def compute_metrics_by_category(all_predictions_df):
+def compute_metrics_by_category(all_predictions_df, all_validation_metrics_filepath):
     """
     This function re-assesses models based on the validation dataset
     """

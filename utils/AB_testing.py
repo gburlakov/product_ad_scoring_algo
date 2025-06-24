@@ -1,15 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
 
 import pandas as pd
 import numpy as np
 from scipy.stats import ttest_ind
-
-
-# In[ ]:
 
 
 def ab_test_selection(all_ranked_products_df, all_predictions_df, \
@@ -70,6 +62,9 @@ def ab_test_selection(all_ranked_products_df, all_predictions_df, \
     all_pred_products_selected_df   = pd.concat(pred_list,   ignore_index=True)
     all_ab_test_results_df          = pd.concat(ab_list,     ignore_index=True)
 
+    all_actual_products_selected_df = all_actual_products_selected_df.drop_duplicates()
+    all_pred_products_selected_df = all_pred_products_selected_df.drop_duplicates()    
+    
     all_actual_products_selected_df.to_csv(all_actual_products_selected_filepath, index=False)
     all_pred_products_selected_df.to_csv(all_pred_products_selected_filepath, index=False)
     all_ab_test_results_df.to_csv(all_ab_test_results_filepath, index=False)
