@@ -1,0 +1,19 @@
+name: ad-score-env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - pandas
+  - openpyxl
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - jupyter
+  - scipy
+  - statsmodels
+  - pip:
+      - lightgbm
+      - xgboost
