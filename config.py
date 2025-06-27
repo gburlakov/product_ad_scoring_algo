@@ -9,6 +9,9 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVR
 
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
+
 
 cwd=os.getcwd()
 cwd = os.path.dirname(cwd)
@@ -52,8 +55,11 @@ all_pred_products_selected_filepath = ABtest_folderpath + all_pred_products_sele
 all_ab_test_results_filename = 'all_ab_test_results.csv'
 all_ab_test_results_filepath = ABtest_folderpath + all_ab_test_results_filename
 
+input_data_xlsx_filepath
+
 date_column = 'date'
-date_prefix_list = ['yr', 'm', 'w', 'wd']
+date_prefix_list = ['yr_', 'm_', 'w_', 'wd_']
+
 
 ad_platform_list = ['meta', 'google']
 
@@ -62,17 +68,9 @@ test_size = 0.15
 val_size = 0.15
 
 target_dict = {ad_platform: [
-    f'{ad_platform}_roi'
+    f'{ad_platform}_impressions_per_spend',
+    f'all_{ad_platform}_roi'
 ] for ad_platform in ad_platform_list}
-
-
-# target_dict = {ad_platform: [
-#     f'{ad_platform}_impressions_per_spend',
-#     f'{ad_platform}_clickthrough_per_spend',
-#     f'{ad_platform}_conversion_per_spend',
-#     f'{ad_platform}_roi',
-#     f'all_{ad_platform}_roi'
-# ] for ad_platform in ad_platform_list}
 
 
 feature_list = [
@@ -84,28 +82,73 @@ feature_list = [
     'pct_product_variants_in_stock',
 ]
 
-model_dict = {
-    'LinearRegression': (LinearRegression(), {}),
-    'DecisionTree': (DecisionTreeRegressor(), {'max_depth': [None, 5, 10]}),
-    'KNeighbors': (KNeighborsRegressor(), {'n_neighbors': [3, 5, 7]})
-}
-
-
-# MODELS = {
-#     'GradientBoosting': (GradientBoostingRegressor(), {'n_estimators': [100, 200, 300], 'learning_rate': [0.01, 0.05, 0.1], 'max_depth': [3, 5, 7]}),
-#     'RandomForest': (RandomForestRegressor(), {'n_estimators': [100, 200, 300], 'max_depth': [None, 5, 10], 'min_samples_split': [2, 5, 10]}),
-#     'HistGradientBoosting': (HistGradientBoostingRegressor(), {'learning_rate': [0.01, 0.05, 0.1], 'max_iter': [100, 200, 300], 'max_depth': [None, 3, 5]}),
-#     'ExtraTrees': (ExtraTreesRegressor(), {'n_estimators': [100, 200, 300], 'max_depth': [None, 5, 10], 'min_samples_split': [2, 5, 10]}),
-#     'AdaBoost': (AdaBoostRegressor(), {'n_estimators': [50, 100, 200], 'learning_rate': [0.01, 0.05, 0.1]}),
+# model_dict = {
+#     'GradientBoosting': (GradientBoostingRegressor(), {
+#         'n_estimators': [100, 200, 300],
+#         'learning_rate': [0.01, 0.05, 0.1],
+#         'max_depth': [3, 5, 7]
+#     }),
+#     'RandomForest': (RandomForestRegressor(), {
+#         'n_estimators': [100, 200, 300],
+#         'max_depth': [None, 5, 10],
+#         'min_samples_split': [2, 5, 10]
+#     }),
+#     'HistGradientBoosting': (HistGradientBoostingRegressor(), {
+#         'learning_rate': [0.01, 0.05, 0.1],
+#         'max_iter': [100, 200, 300],
+#         'max_depth': [None, 3, 5]
+#     }),
+#     'ExtraTrees': (ExtraTreesRegressor(), {
+#         'n_estimators': [100, 200, 300],
+#         'max_depth': [None, 5, 10],
+#         'min_samples_split': [2, 5, 10]
+#     }),
+#     'AdaBoost': (AdaBoostRegressor(), {
+#         'n_estimators': [50, 100, 200],
+#         'learning_rate': [0.01, 0.05, 0.1]
+#     }),
 #     'LinearRegression': (LinearRegression(), {}),
-#     'DecisionTree': (DecisionTreeRegressor(), {'max_depth': [None, 5, 10]}),
-#     'KNeighbors': (KNeighborsRegressor(), {'n_neighbors': [3, 5, 7]}),
-#     'SVR': (SVR(), {'C': [0.1, 1, 10], 'kernel': ['linear', 'rbf']})
+#     'DecisionTree': (DecisionTreeRegressor(), {
+#         'max_depth': [None, 5, 10]
+#     }),
+#     'KNeighbors': (KNeighborsRegressor(), {
+#         'n_neighbors': [3, 5, 7]
+#     }),
+#     'XGBoost': (XGBRegressor(objective='reg:squarederror', verbosity=0), {
+#         'n_estimators': [100, 200, 300],
+#         'learning_rate': [0.01, 0.05, 0.1],
+#         'max_depth': [3, 5, 7]
+#     }),
+#     'LGBM': (LGBMRegressor(), {
+#         'n_estimators': [100, 200, 300],
+#         'learning_rate': [0.01, 0.05, 0.1],
+#         'max_depth': [3, 5, 7]
+#     })
 # }
 
+model_dict = {
+    'LinearRegression': (LinearRegression(), {}),
+    'RandomForest': (RandomForestRegressor(), {
+        'n_estimators': [100, 200, 300],
+        'max_depth': [None, 5, 10],
+        'min_samples_split': [2, 5, 10]
+    }),
+    'KNeighbors': (KNeighborsRegressor(), {
+        'n_neighbors': [3, 5, 7]
+    }),
+    'XGBoost': (XGBRegressor(objective='reg:squarederror', verbosity=0), {
+        'n_estimators': [100, 200, 300],
+        'learning_rate': [0.01, 0.05, 0.1],
+        'max_depth': [3, 5, 7]
+    }),
+    'LGBM': (LGBMRegressor(), {
+        'n_estimators': [100, 200, 300],
+        'learning_rate': [0.01, 0.05, 0.1],
+        'max_depth': [3, 5, 7]
+    })
+}
 
-n_trials_optuna = 1
-
+n_trials_optuna = 50
 
 def save_val_end_points(df):
     """
@@ -118,11 +161,4 @@ def save_val_end_points(df):
     val_last_day_str = val_last_day.strftime('%Y-%m-%d')
     
     return val_first_day, val_last_day, val_last_day_str
-
-
-# for ad_platform in ad_platform_list:
-#     model_dict = {
-#         ad_platform: {'ensemble': [meta_data_folderpath + '\\' + f'{ad_platform}_ensemble_model.pkl'], 'encoders': [meta_data_folderpath + '\\' + f'{ad_platform}_encoders.pkl'], 'scalers': [meta_data_folderpath + '\\' + f'{ad_platform}_scalers.pkl']}
-#         for ad_platform in ad_platform_list
-#     }
 

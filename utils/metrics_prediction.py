@@ -144,7 +144,18 @@ def predict_metric(trained_models_folderpath, val_last_day_str, X_val, y_val, or
     melted_df['target'] = target
     melted_df['ad_platform'] = ad_platform
     
-    melted_df.set_index('product_id', inplace=True)
+    if 'date' not in melted_df.columns and 'date' in orig_X_val.columns:
+        melted_df['date'] = orig_X_val['date'].values.repeat(m)
 
+    melted_df.reset_index(drop=True, inplace=True)
+
+    sort_cols = ['product_id', 'category', 'model', 'date']
+    for col in sort_cols:
+        if col not in melted_df.columns:
+            print(f"Warning: Column '{col}' not found in melted_df, skipping in sort.")
+    melted_df.sort_values(by=[col for col in sort_cols if col in melted_df.columns], inplace=True)
+
+    melted_df.set_index('product_id', inplace=True)
+    
     return melted_df
 

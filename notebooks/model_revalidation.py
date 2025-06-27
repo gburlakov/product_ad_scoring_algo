@@ -1,15 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
 
 import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-
-
-# In[ ]:
 
 
 def compute_metrics_by_category(all_predictions_df, all_validation_metrics_filepath):
@@ -58,6 +50,10 @@ def compute_metrics_by_category(all_predictions_df, all_validation_metrics_filep
     metrics_df['rank'] = metrics_df.groupby(
         ['target','category','ad_platform']
     )['RMSE'].rank(method='first', ascending=True)
+    
+    metrics_df.sort_values(by=['category', 'target', 'ad_platform', 'rank'], inplace=True)
+    
+    metrics_df.to_csv(all_validation_metrics_filepath, index=True)
     
     return metrics_df
 

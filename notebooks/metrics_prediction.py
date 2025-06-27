@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
 
 import os
 import pandas as pd
@@ -10,14 +5,7 @@ import numpy as np
 import datetime
 import pickle
 
-
-# In[ ]:
-
-
 from config import trained_models_folderpath, model_dict
-
-
-# In[ ]:
 
 
 def reverse_one_hot(df, prefix, new_col_name):
@@ -33,9 +21,6 @@ def reverse_one_hot(df, prefix, new_col_name):
     df[new_col_name] = extracted.astype("Int64")
     
     return df
-
-
-# In[2]:
 
 
 def predict_metric(trained_models_folderpath, val_last_day_str, X_val, y_val, orig_X_val, target, ad_platform, model_dict):
@@ -75,7 +60,7 @@ def predict_metric(trained_models_folderpath, val_last_day_str, X_val, y_val, or
 
     for col in X.columns:
         if X[col].dtype == 'object':
-            if col in encoders:  # Check if encoder exists (handle unseen categories)
+            if col in encoders:
                 try:
                     X[col] = encoders[col].transform(X[col])
                 except ValueError as e:
@@ -88,7 +73,7 @@ def predict_metric(trained_models_folderpath, val_last_day_str, X_val, y_val, or
 
     numerical_cols = X.select_dtypes(include=np.number).columns
     for col in numerical_cols:
-        if col in scalers: #Check if scaler exists
+        if col in scalers:
             X[col] = scalers[col].transform(X[[col]])
         else:
             print(f"Warning: No scaler found for column {col}. Skipping scaling.")
@@ -144,7 +129,18 @@ def predict_metric(trained_models_folderpath, val_last_day_str, X_val, y_val, or
     melted_df['target'] = target
     melted_df['ad_platform'] = ad_platform
     
-    melted_df.set_index('product_id', inplace=True)
+    if 'date' not in melted_df.columns and 'date' in orig_X_val.columns:
+        melted_df['date'] = orig_X_val['date'].values.repeat(m)
 
+    melted_df.reset_index(drop=True, inplace=True)
+
+    sort_cols = ['product_id', 'category', 'model', 'date']
+    for col in sort_cols:
+        if col not in melted_df.columns:
+            print(f"Warning: Column '{col}' not found in melted_df, skipping in sort.")
+    melted_df.sort_values(by=[col for col in sort_cols if col in melted_df.columns], inplace=True)
+
+    melted_df.set_index('product_id', inplace=True)
+    
     return melted_df
 

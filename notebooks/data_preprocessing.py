@@ -1,20 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[8]:
-
 
 import pandas as pd
 
-
-# In[9]:
-
-
 from config import date_column
-
-
-# In[4]:
-
 
 def convert_text_to_datetime(df, date_column):
     """
@@ -27,10 +14,6 @@ def convert_text_to_datetime(df, date_column):
     df[date_column] = pd.to_datetime(df[date_column])
     
     return df
-
-
-# In[5]:
-
 
 def impute_missing(df):
     """
@@ -47,10 +30,6 @@ def impute_missing(df):
                 df[col] = df[col].fillna(df[col].mode()[0])
     
     return df
-
-
-# In[6]:
-
 
 def preprocess_data(df, date_column):
     """

@@ -8,14 +8,28 @@ import pickle
 from sklearn.model_selection import train_test_split, KFold, GridSearchCV
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
+
 import optuna
 
 from config import input_data_csv_filepath, ad_platform_list, train_size, model_dict, \
 target_dict, feature_list, trained_models_folderpath, n_trials_optuna
 
+input_df = pd.read_csv(input_data_csv_filepath)
 
-def set_train_test_val_size(df, val_first_day, val_last_day, train_size, target, features, date_column, prefixes, dummy_columns, \
-                            encoding=True):
+
+# In[4]:
+
+
+input_df
+
+
+# In[ ]:
+
+
+def set_train_test_val_size(df, val_first_day, val_last_day, train_size, ad_platform, target, features, date_column, prefixes, dummy_columns, encoding=True):
     """
     Splits the input dataset into train, test, and validation sets.
 
@@ -34,7 +48,8 @@ def set_train_test_val_size(df, val_first_day, val_last_day, train_size, target,
             - Encoded version: X_train, X_test, X_val, y_train, y_test, y_val, encoders, scalers
             - Raw version: X_val, y_val
     """
-    X = df[features + [date_column]].replace([np.inf, -np.inf], np.nan).fillna(0)
+    df = df[df[f'{ad_platform}_spend'] > 0]
+    X = df[features + [date_column]]
     y = df[[target, date_column]]
 
     encoders, scalers = {}, {}
@@ -47,6 +62,7 @@ def set_train_test_val_size(df, val_first_day, val_last_day, train_size, target,
         
         numerical_cols = X[features].select_dtypes(include=np.number).columns
         for col in numerical_cols:
+            print(col)
             scalers[col] = StandardScaler()
             X[col] = scalers[col].fit_transform(X[[col]])
 
@@ -144,7 +160,7 @@ def train_model(df, ad_platform, target, features, val_last_day_str, trained_mod
         model_dict (dict): dictionary with trained model_names, models and parameter grids
     """
     best_models = {}
-
+    
     for model_name, (model_class, param_grid) in model_dict.items():
         print(f"Optimizing {model_name}...")
 

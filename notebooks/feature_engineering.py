@@ -1,20 +1,10 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
 
 import pandas as pd
 import numpy as np
 
-
-# In[2]:
-
+import matplotlib.pyplot as plt
 
 from config import date_column, date_prefix_list, ad_platform_list
-
-
-# In[ ]:
 
 
 def encode_date(df, date_column, date_prefix_list):
@@ -31,9 +21,6 @@ def encode_date(df, date_column, date_prefix_list):
     return pd.get_dummies(df, columns=['year', 'month', 'week', 'weekday'], prefix=date_prefix_list)
 
 
-# In[3]:
-
-
 def compute_discount(df):
     """
     This function derives the discount rate column from the price and sale price columns
@@ -47,10 +34,64 @@ def compute_discount(df):
     return df
 
 
-# In[4]:
+def check_null_nans(df, variable, input_data_folderpath):
+    """
+    This function checks the share of missing and zero values in input variables
+    """
+    print(variable)
+    
+    null_count = df[variable].isna().sum()
+    total_count = len(df)
+    null_share = null_count / total_count
+    print(f'Nulls in {variable}: {null_count} ({null_share:.2%})')
+    
+    zero_count = (df[variable] == 0).sum()
+    total_count = len(df)
+    zero_share = zero_count / total_count
+    print(f'Zeros in {variable}: {zero_count} ({zero_share:.2%})')
+    
+    histogram_filepath = input_data_folderpath + f'\\histograms\\{variable}_hist.jpg'
+    
+    low, high = df[variable].quantile([0.025, 0.975])
+    
+    df[variable].hist(bins=1000)
+    plt.xlim(low, high)
+    plt.title(f'Distribution of {variable}')
+    plt.xlabel(variable)
+    plt.ylabel('Frequency')
+    
+    plt.ylim(0, df[variable].value_counts(bins=100).max() * 1.1)
+    
+    note_nulls = f"Nulls in {variable}: {null_count} ({null_share:.2%})"
+    plt.figtext(0.5, -0.05, note_nulls, wrap=True, horizontalalignment='center', fontsize=9)
+
+    note_zeros = f"Zeros in {variable}: {zero_count} ({zero_share:.2%})"
+    plt.figtext(0.5, -0.15, note_zeros, wrap=True, horizontalalignment='center', fontsize=9)
+   
+    plt.tight_layout()
+    plt.savefig(histogram_filepath, dpi=300, bbox_inches='tight')
+    plt.show()
 
 
-def compute_target_metrics(df, ad_platform):
+def check_infs(df, variable):
+    """
+    This function checks the share of infinite values in derived variables
+    """
+    print(variable)
+    
+#     df[variable].hist(bins=50)
+#     plt.title(f'Distribution of {variable}')
+#     plt.xlabel(variable)
+#     plt.ylabel('Frequency')
+#     plt.show()
+    
+    inf_count = np.isinf(df[variable]).sum()
+    total_count = len(df)
+    inf_share = inf_count/total_count
+    print(f'Inf {variable} before replacement: {inf_count} ({inf_share:.2%})')
+
+
+def compute_target_metrics(df, ad_platform, input_data_folderpath):
     """
     This function derives the target metrics from online perfomance columns by ad platform
     
@@ -58,49 +99,45 @@ def compute_target_metrics(df, ad_platform):
         df (pd.DataFrame): input dataframe with online perfomance columns
         ad_platform (str): ad platform, meta and google
     """
+    check_null_nans(df, f'{ad_platform}_spend', input_data_folderpath)
+    check_null_nans(df, f'{ad_platform}_impressions', input_data_folderpath)
+    check_null_nans(df, f'{ad_platform}_clicks', input_data_folderpath)
+    check_null_nans(df, f'{ad_platform}_item_quantity_sold', input_data_folderpath)
+    check_null_nans(df, f'{ad_platform}_product_revenue', input_data_folderpath)
+     
     df[f'{ad_platform}_impressions_per_spend'] = (df[f'{ad_platform}_impressions'] / (df[f'{ad_platform}_spend'])).fillna(0)
+    check_infs(df, f'{ad_platform}_impressions_per_spend')
+    df[f'{ad_platform}_impressions_per_spend'] = df[f'{ad_platform}_impressions_per_spend'].replace([np.inf, -np.inf], 0)
     
     df[f'{ad_platform}_clickthrough'] = (df[f'{ad_platform}_clicks'] / df[f'{ad_platform}_impressions']).fillna(0)
     df[f'{ad_platform}_clickthrough_per_spend'] = (df[f'{ad_platform}_clickthrough'] / (df[f'{ad_platform}_spend'])).fillna(0)
+    check_infs(df, f'{ad_platform}_clickthrough_per_spend')
+    df[f'{ad_platform}_clickthrough_per_spend'] = df[f'{ad_platform}_clickthrough_per_spend'].replace([np.inf, -np.inf], 0)
     
     df[f'{ad_platform}_conversion'] = (df[f'{ad_platform}_item_quantity_sold'] / df[f'{ad_platform}_impressions']).fillna(0)
     df[f'{ad_platform}_conversion_per_spend'] = (df[f'{ad_platform}_conversion'] / (df[f'{ad_platform}_spend'])).fillna(0)
+    check_infs(df, f'{ad_platform}_conversion_per_spend')
+    df[f'{ad_platform}_conversion_per_spend'] = df[f'{ad_platform}_conversion'].replace([np.inf, -np.inf], 0)
     
     df[f'{ad_platform}_roi'] = (df[f'{ad_platform}_product_revenue'] - df[f'{ad_platform}_spend']) / (df[f'{ad_platform}_spend'] + 1e-9)
+    check_infs(df, f'{ad_platform}_roi')
     df[f'{ad_platform}_roi'] = df[f'{ad_platform}_roi'].replace([np.inf, -np.inf], 0)
-
+    
     df[f'all_{ad_platform}_roi'] = (df['all_product_revenue'] - df[f'{ad_platform}_spend']) / (df[f'{ad_platform}_spend'] + 1e-9)
+    check_infs(df, f'all_{ad_platform}_roi')
     df[f'all_{ad_platform}_roi'] = df[f'all_{ad_platform}_roi'].replace([np.inf, -np.inf], 0)    
+
+    check_infs(df, f'{ad_platform}_impressions_per_spend')
+    check_infs(df, f'{ad_platform}_clickthrough_per_spend')
+    check_infs(df, f'{ad_platform}_conversion_per_spend')
+    check_infs(df, f'{ad_platform}_roi')
+    check_infs(df, f'all_{ad_platform}_roi')
     
     return df
 
 
-# In[5]:
 
-
-# def compute_interaction_features(df, ad_platform):
-#     """
-#     This function derives interactive metrics fom views, impressions, revenue and sale volume values
-    
-#     Args:
-#        df (pd.DataFrame): input dataframe with views, impressions, revenue, spend and sale volume columns
-#        ad_platform (str): ad platform, meta and google
-#     """
-#     df[f'{ad_platform}_views_per_impression'] = (df[f'{ad_platform}_product_detail_views'] / (df[f'{ad_platform}_impressions'] + 1e-9)).fillna(0)
-#     df[f'{ad_platform}_clicks_per_impression'] = (df[f'{ad_platform}_clicks'] / (df[f'{ad_platform}_impressions'] + 1e-9)).fillna(0)
-#     df[f'{ad_platform}_revenue_per_click'] = (df[f'{ad_platform}_product_revenue'] / (df[f'{ad_platform}_clicks'] + 1e-9)).fillna(0)
-#     df[f'{ad_platform}_qty_per_click'] = (df[f'{ad_platform}_quantity_added_to_cart'] / (df[f'{ad_platform}_clicks'] + 1e-9)).fillna(0)
-#     df[f'{ad_platform}_roi_per_view'] = (df[f'{ad_platform}_product_revenue'] - df[f'{ad_platform}_spend']) / (df[f'{ad_platform}_product_detail_views'] + 1e-9)
-    
-#     df = df.replace([np.inf, -np.inf], 0).fillna(0)
-    
-#     return df
-
-
-# In[6]:
-
-
-def engineer_features(df, date_column, date_prefix_list, ad_platform_list):
+def engineer_features(df, date_column, date_prefix_list, ad_platform_list, input_data_folderpath):
     """
     This function runs feature engineering methods
     
@@ -114,7 +151,7 @@ def engineer_features(df, date_column, date_prefix_list, ad_platform_list):
     df = compute_discount(df)
 
     for ad_platform in ad_platform_list:
-        compute_target_metrics(df, ad_platform)
+        compute_target_metrics(df, ad_platform, input_data_folderpath)
     
     return df
 

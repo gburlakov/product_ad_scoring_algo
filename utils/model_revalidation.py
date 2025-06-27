@@ -51,5 +51,9 @@ def compute_metrics_by_category(all_predictions_df, all_validation_metrics_filep
         ['target','category','ad_platform']
     )['RMSE'].rank(method='first', ascending=True)
     
+    metrics_df.sort_values(by=['category', 'target', 'ad_platform', 'rank'], inplace=True)
+    
+    metrics_df.to_csv(all_validation_metrics_filepath, index=True)
+    
     return metrics_df
 
